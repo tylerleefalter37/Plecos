@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DEAD RECKONING // L-Number & Pleco Empire</title>
+<style>
+    :root {
+        --bg-black: #000000;
+        --bg-panel: #06090c;
+        --bg-card: #0b1016;
+        --bg-btn: #111822;
+        --bg-btn-hover: #1c2838;
+        --border: #1e293b;
+        --border-bright: #334155;
+        --text-main: #e2e8f0;
+        --text-dim: #7c8ea6;
+        --amber: #ffb74d;
+        --green: #4ade80;
+        --red: #f87171;
+        --cyan: #38bdf8;
+        --purple: #c084fc;
+        --gold: #facc15;
+    }
+
+    * {
+        box-sizing: border-box;
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+        font-family: 'Courier New', Courier, monospace;
+        background-color: var(--bg-black);
+        color: var(--text-main);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100dvh;
+        overflow: hidden;
+        user-select: none;
+    }
+
+    /* TOP VITALS BAR */
+    #vitals {
+        flex: 0 0 auto;
+        background-color: var(--bg-panel);
+        border-bottom: 1px solid var(--border);
+        padding: 8px 12px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+        font-size: 0.82rem;
+    }
+    @media (min-width: 768px) {
+        #vitals {
+            grid-template-columns: repeat(6, 1fr);
+            font-size: 0.9rem;
+            padding: 10px 18px;
+        }
+    }
+    .vital-box {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        padding: 5px 8px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .vital-label { color: var(--text-dim); font-size: 0.75rem; }
+    .vital-val { font-weight: bold; color: var(--text-main); }
+    .vital-val.cash { color: var(--green); }
+    .vital-val.rep { color: var(--cyan); }
+
+    /* NAVIGATION TABS */
+    #nav-tabs {
+        flex: 0 0 auto;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        background: var(--bg-black);
+        border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+        background: var(--bg-panel);
+        color: var(--text-dim);
+        border: none;
+        border-right: 1px solid var(--border);
+        padding: 10px 4px;
+        font-family: inherit;
+        font-size: 0.75rem;
+        font-weight: bold;
+        cursor: pointer;
+        touch-action: manipulation;
+        transition: background 0.15s, color 0.15s;
+    }
+    .tab-btn:last-child { border-right: none; }
+    .tab-btn.active {
+        background: var(--bg-black);
+        color: var(--cyan);
+        border-bottom: 2px solid var(--cyan);
+    }
+    @media (min-width: 768px) {
+        .tab-btn { font-size: 0.88rem; padding: 12px; }
+    }
+
+    /* MAIN WORKSPACE */
+    #workspace {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        padding: 10px;
+        background: var(--bg-black);
+    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
+
+    /* PANELS */
+    .panel {
+        background: var(--bg-panel);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    .panel-title {
+        font-size: 0.85rem;
+        color: var(--cyan);
+        font-weight: bold;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 5px;
+    }
+
+    /* CARDS & GRIDS */
+    .card-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    @media (min-width: 700px) {
+        .card-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (min-width: 1100px) {
+        .card-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .fish-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 5px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        position: relative;
+    }
+    .fish-card.locked { border-color: #475569; }
+    .fish-card.expo-picked { border-color: var(--gold); box-shadow: 0 0 6px rgba(250, 204, 21, 0.25); }
+    .fish-card.worlds-first { border-color: var(--purple); }
+
+    .card-top {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* PROCEDURAL PLECO SWATCH */
+    .swatch {
+        width: 34px;
+        height: 34px;
+        border-radius: 4px;
+        border: 1px solid var(--border-bright);
+        flex-shrink: 0;
+    }
+
+    .fish-info { flex: 1; min-width: 0; }
+    .fish-name {
+        font-weight: bold;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .fish-meta {
+        font-size: 0.74rem;
+        color: var(--text-dim);
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 2px;
+    }
+    .badge {
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 0.68rem;
+        font-weight: bold;
+        border: 1px solid var(--border);
+        background: #0f172a;
+    }
+    .badge.male { color: var(--cyan); border-color: #0369a1; }
+    .badge.female { color: #f472b6; border-color: #9d174d; }
+    .badge.stage { color: var(--amber); }
+    .badge.wf { color: var(--purple); border-color: var(--purple); }
+
+    .card-actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 4px;
+        margin-top: 2px;
+    }
+
+    /* BUTTONS */
+    button {
+        background: var(--bg-btn);
+        color: var(--text-main);
+        border: 1px solid var(--border-bright);
+        padding: 7px 8px;
+        font-size: 0.76rem;
+        border-radius: 4px;
+        cursor: pointer;
+        font-family: inherit;
+        touch-action: manipulation;
+    }
+    button:hover { background: var(--bg-btn-hover); }
+    button:active { transform: translateY(1px); }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-amber { border-color: var(--amber); color: var(--amber); }
+    .btn-cyan { border-color: var(--cyan); color: var(--cyan); }
+    .btn-green { border-color: var(--green); color: var(--green); }
+    .btn-red { border-color: var(--red); color: var(--red); }
+    .btn-purple { background: #1e0b36; border-color: var(--purple); color: #e9d5ff; font-weight: bold; }
+    .btn-gold-active { background: #2b2205; border-color: var(--gold); color: var(--gold); }
+
+    select, input[type="text"] {
+        background: var(--bg-card);
+        color: var(--text-main);
+        border: 1px solid var(--border-bright);
+        padding: 7px;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 0.8rem;
+        width: 100%;
+    }
+
+    /* 40-LANE MATRIX */
+    #lane-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 4px;
+        margin-top: 8px;
+    }
+    @media (min-width: 768px) {
+        #lane-grid { grid-template-columns: repeat(10, 1fr); }
+    }
+    .lane-cell {
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 3px;
+        padding: 4px;
+        font-size: 0.66rem;
+        text-align: center;
+        transition: all 0.2s;
+    }
+    .lane-cell.bidding {
+        border-color: var(--green);
+        background: #062412;
+        color: var(--green);
+    }
+    .lane-cell.war {
+        border-color: var(--amber);
+        background: #291803;
+        color: var(--amber);
+        font-weight: bold;
+    }
+    .lane-tier-1 { border-top: 2px solid var(--purple); }
+    .lane-tier-2 { border-top: 2px solid var(--cyan); }
+    .lane-tier-3 { border-top: 2px solid var(--green); }
+    .lane-tier-4 { border-top: 2px solid var(--text-dim); }
+
+    /* NARRATIVE LOG & FOOTER BAR */
+    #bottom-dock {
+        flex: 0 0 28%;
+        min-height: 150px;
+        max-height: 240px;
+        background: var(--bg-panel);
+        border-top: 2px solid var(--border);
+        display: flex;
+        flex-direction: column;
+    }
+    #quick-bar {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 6px 10px;
+        background: #030508;
+        border-bottom: 1px solid var(--border);
+    }
+    #log {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px 12px;
+        font-size: 0.78rem;
+        line-height: 1.4;
+        background: var(--bg-black);
+    }
+    .log-entry { margin-bottom: 5px; }
+    .log-entry.system { color: var(--cyan); font-weight: bold; }
+    .log-entry.success { color: var(--green); }
+    .log-entry.warning { color: var(--red); }
+    .log-entry.info { color: var(--amber); }
+    .log-entry.god { color: var(--purple); font-weight: bold; text-shadow: 0 0 6px rgba(192, 132, 252, 0.5); }
+
+    .two-col {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+    @media (min-width: 768px) {
+        .two-col { grid-template-columns: 1fr 1fr; }
+    }
+</style>
+</head>
+<body>
+
+<!-- TOP VITALS DASHBOARD -->
+<div id="vitals">
+    <div class="vital-box"><span class="vital-label">📅 DAY</span><span class="vital-val" id="v-day">1</span></div>
+    <div class="vital-box"><span class="vital-label">💵 CASH</span><span class="vital-val cash" id="v-cash">$1,000</span></div>
+    <div class="vital-box"><span class="vital-label">🐟 TANKS</span><span class="vital-val" id="v-rack">2 / 10</span></div>
+    <div class="vital-box"><span class="vital-label">🌊 CLUB REP</span><span class="vital-val rep" id="v-rep">0</span></div>
+    <div class="vital-box"><span class="vital-label">🪱 LIVE FOOD</span><span class="vital-val" id="v-feed">0%</span></div>
+    <div class="vital-box"><span class="vital-label">⭐ SWAP / Q</span><span class="vital-val" id="v-expo">0/5 | Q:0</span></div>
+</div>
+
+<!-- NAVIGATION TABS -->
+<div id="nav-tabs">
+    <button class="tab-btn active" onclick="switchTab('rack', this)">🐟 TANKS & CAVES</button>
+    <button class="tab-btn" onclick="switchTab('market', this)">🏷️ AQUABID</button>
+    <button class="tab-btn" onclick="switchTab('bio', this)">🦐 CULTURES</button>
+    <button class="tab-btn" onclick="switchTab('expo', this)">🏛️ 40-LANE SWAP</button>
+    <button class="tab-btn" onclick="switchTab('manual', this)">📖 MANUAL/GOD</button>
+</div>
+
+<!-- MAIN WORKSPACE -->
+<div id="workspace">
+
+    <!-- TAB 1: TANK RACK & CAVE SPAWNING -->
+    <div id="tab-rack" class="tab-pane active">
+        <div class="panel">
+            <div class="panel-title">
+                <span>🏺 CAVE SPAWNING & MENDELIAN LAB</span>
+                <span id="inc-status" style="font-size:0.75rem; color:var(--amber);">Breeding Cave: Standard Slate (2 Fry/Spawn)</span>
+            </div>
+            <div class="two-col">
+                <div>
+                    <label style="font-size:0.72rem; color:var(--text-dim);">SELECT CAVE MASTER (1.0 ADULT MALE)</label>
+                    <select id="select-sire" onchange="updatePunnettPreview()"></select>
+                </div>
+                <div>
+                    <label style="font-size:0.72rem; color:var(--text-dim);">SELECT GRAVID DAM (0.1 ADULT FEMALE)</label>
+                    <select id="select-dam" onchange="updatePunnettPreview()"></select>
+                </div>
+            </div>
+            <div id="punnett-preview" style="margin-top:8px; padding:8px; background:var(--bg-card); border:1px solid var(--border); border-radius:4px; font-size:0.76rem; color:var(--text-dim);">
+                Select an Adult 1.0 Male and Adult 0.1 Female to preview L-Number & Bristlenose allele probabilities.
+            </div>
+            <div style="margin-top:8px; display:flex; gap:8px;">
+                <button class="btn-green" style="flex:2; font-weight:bold;" onclick="breedSelectedPair()">🏺 TRAP IN CAVE & FAN CLUTCH (+5 Days)</button>
+                <button class="btn-cyan" style="flex:1;" onclick="upgradeRack()">+10 BREEDER RACK ($1,000)</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>🐟 FISHROOM BREEDER TANKS (<span id="rack-count-label">0</span>)</span>
+                <div style="display:flex; gap:6px;">
+                    <button onclick="setRackFilter('all')" id="flt-all" class="btn-cyan" style="padding:3px 7px; font-size:0.7rem;">ALL</button>
+                    <button onclick="setRackFilter('M')" id="flt-m" style="padding:3px 7px; font-size:0.7rem;">1.0 M</button>
+                    <button onclick="setRackFilter('F')" id="flt-f" style="padding:3px 7px; font-size:0.7rem;">0.1 F</button>
+                    <button onclick="setRackFilter('expo')" id="flt-expo" style="padding:3px 7px; font-size:0.7rem;">⭐ SWAP</button>
+                </div>
+            </div>
+            <div id="rack-grid" class="card-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 2: BARGAIN AQUABID & PRIVATE SALE QUEUE -->
+    <div id="tab-market" class="tab-pane">
+        <div class="panel">
+            <div class="panel-title">
+                <span>🏷️ DISTRESSED TANK TEARDOWNS & UNPROVEN HETS</span>
+                <button onclick="refreshBargainMarket(true)">🔄 Scout Listings ($50)</button>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                Local tank breakdowns, unsexed "66% Possible Het" juveniles (prove them out in your breeding caves!), and mislabeled store trade-ins. Refreshes every 5 days.
+            </div>
+            <div id="bargain-grid" class="card-grid"></div>
+            <div style="margin-top:10px; padding-top:8px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.78rem; color:var(--text-dim);">Order an unsorted wild/German transshipped import box?</span>
+                <button class="btn-cyan" onclick="buyBlindStock()">📦 Transship Import ($250)</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>📬 AQUABID DIRECT LISTING QUEUE (<span id="queue-count">0</span> / 5 Slots)</span>
+                <span style="font-size:0.74rem; color:var(--green);">Ships out passively as days advance</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                List surplus plecos from your tanks anytime for steady 100% market value + club reputation bonus without waiting for a weekend Swap.
+            </div>
+            <div id="queue-grid" class="card-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 3: LIVE FOODS, SHRIMP & BUCE CULTURES -->
+    <div id="tab-bio" class="tab-pane">
+        <div class="two-col">
+            <div class="panel">
+                <div class="panel-title">
+                    <span>🪱 LIVE FOOD & GEL CULTURES</span>
+                    <span style="font-size:0.74rem; color:var(--green);" id="feeder-savings-label">Offsets $0/wk</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                    Each pleco costs $20 per feeding/water-change cycle. Culturing live foods slashes your overhead and conditioning time for growing Fry to Adult size.
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <div class="fish-card">
+                        <div class="card-top">
+                            <div class="swatch" style="background: radial-gradient(circle, #b71c1c 35%, #3e2723 100%);"></div>
+                            <div class="fish-info">
+                                <div class="fish-name">California Blackworm Troughs</div>
+                                <div class="fish-meta">Tier <span id="worm-tier">0</span> | Covers <span id="worm-cov">0</span> plecos/feeding</div>
+                            </div>
+                            <button class="btn-green" onclick="upgradeFeeder('worm')">Upgrade ($<span id="worm-cost">400</span>)</button>
+                        </div>
+                    </div>
+                    <div class="fish-card">
+                        <div class="card-top">
+                            <div class="swatch" style="background: repeating-linear-gradient(45deg, #2e7d32, #2e7d32 5px, #1b5e20 5px, #1b5e20 10px);"></div>
+                            <div class="fish-info">
+                                <div class="fish-name">Aufwuchs Gel & Brine Hatchery</div>
+                                <div class="fish-meta">Tier <span id="gel-tier">0</span> | Covers <span id="gel-cov">0</span> plecos + 2x Fry Growth</div>
+                            </div>
+                            <button class="btn-green" onclick="upgradeFeeder('gel')">Upgrade ($<span id="gel-cost">350</span>)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">
+                    <span>⚙️ FISHROOM FILTRATION & SWAP HARDWARE</span>
+                </div>
+                <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                    Upgrade RO/DI water systems, river powerheads, and your 8-foot swap display table to boost spawn sizes and shrimp/plant propagation.
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px;" id="hardware-list"></div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>🦐 SHRIMP, BUCEPHALANDRA & MOSS PROPAGATION</span>
+                <span style="font-size:0.75rem; color:var(--amber);">🛍️ Bagged Swap Lots Ready: <strong id="iso-cups-ready">0</strong> ($<span id="iso-cups-val">0</span> est.)</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                Companion shrimp and rare plants multiply in your pleco grow-out tanks every day. Harvest breather bags to sell locally or stack them on your 8-Foot Swap Table for walk-up cash!
+            </div>
+            <div id="isopod-grid" class="card-grid"></div>
+            <div style="margin-top:8px; display:flex; gap:8px;">
+                <button class="btn-green" style="flex:1;" onclick="sellHarvestedCupsDirect()">💵 Sell All Bagged Lots Locally</button>
+                <button class="btn-cyan" style="flex:1;" onclick="harvestAllMaturePods()">✂️ Auto-Bag All Tanks (>100 pop)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 4: 8-FOOT SWAP TABLE & 40-LANE BAG AUCTION -->
+    <div id="tab-expo" class="tab-pane">
+        <div class="panel">
+            <div class="panel-title">
+                <span>🎪 8-FOOT AQUARIUM CLUB SWAP TABLE ("FIVE-PICK" SHOWCASE)</span>
+                <span style="font-size:0.75rem; color:var(--gold);">Selected: <span id="expo-pick-count">0</span> / 5 Plecos + <span id="expo-iso-count">0</span> Shrimp/Plant Bags</span>
+            </div>
+            <div style="font-size:0.75rem; color:var(--text-dim); margin-bottom:8px;">
+                Star (⭐) up to 5 standout plecos in your Tanks to display in illuminated specimen boxes on your 8-foot table. Bring bagged Shrimp & Bucephalandra lots for instant walk-up sales!
+            </div>
+            <div id="expo-table-cards" class="card-grid"></div>
+            <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:8px;">
+                <button class="btn-cyan" onclick="runSocialHype()">📸 Post Macro Fin Shots ($150) [Draws L-Number Whales]</button>
+                <button class="btn-green" style="font-weight:bold; flex:1;" id="btn-start-expo" onclick="startExpoAuction()">🚀 OPEN 40-LANE LIVE CLUB AUCTION</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">
+                <span>🏛️ 40-LANE LIVE AQUARIUM CLUB BIDDING FLOOR</span>
+                <span id="expo-round-label" style="color:var(--green);">Status: Standby</span>
+            </div>
+            <div style="display:flex; gap:10px; font-size:0.7rem; color:var(--text-dim); margin-bottom:6px; flex-wrap:wrap;">
+                <span><strong style="color:var(--purple);">■ Lanes 1-5:</strong> L-Number Whales</span>
+                <span><strong style="color:var(--cyan);">■ Lanes 6-15:</strong> Master Breeders</span>
+                <span><strong style="color:var(--green);">■ Lanes 16-30:</strong> Aquascapers</span>
+                <span><strong style="color:var(--text-dim);">■ Lanes 31-40:</strong> Bag Bargain Hunters</span>
+            </div>
+
+            <!-- TACTICAL LIVE CONTROLS -->
+            <div id="expo-live-controls" style="display:none; grid-template-columns: repeat(3, 1fr); gap:8px; margin-bottom:10px;">
+                <button class="btn-amber" onclick="advanceAuctionRound('hold')">⏱️ HOLD RESERVE (Next Bid Wave)</button>
+                <button class="btn-purple" onclick="advanceAuctionRound('hype')">🔦 FLASH LED SPOTLIGHT (Rep Boost)</button>
+                <button class="btn-green" onclick="finalizeExpoSales()">🔨 GAVEL & BAG ALL LOTS</button>
+            </div>
+
+            <div id="lane-grid"></div>
+        </div>
+    </div>
+
+    <!-- TAB 5: MANUAL, SAVE & GOD MODE -->
+    <div id="tab-manual" class="tab-pane">
+        <div class="two-col">
+            <div class="panel">
+                <div class="panel-title"><span>📖 LORICARIIDAE BREEDER'S MANUAL</span></div>
+                <div style="font-size:0.78rem; line-height:1.5; color:var(--text-main);">
+                    <p><strong style="color:var(--cyan);">1. 20-GENE PLECO & L-NUMBER ENGINE:</strong> Tracks 20 genetic loci across Bristlenose morphs & prized L-Numbers:
+                        <br>• <em>10 Co-Dominant / Line Loci:</em> Longfin (Super = Dragonfin Veil), Super Red, Calico, Green Dragon, L144 Lemon Blue-Eye, L183 Starlight, L018 Gold Nugget, L260 Queen Arabesque, L066 King Tiger, L024 Flame Cactus.
+                        <br>• <em>6 Recessive Loci:</em> Albino, Snow White, L046 Imperial Zebra, L236 Super White, L128 Blue Phantom, L014 Sunshine (1 copy = Hidden Het, 2 copies = Visual).
+                        <br>• <em>4 Dominant Loci:</em> High-Fin Sail, Wavy Vermiculated, L134 Leopard Frog, L034 Medusa Spine.
+                        <br>• <em>Synergies & World's Firsts:</em> Combining specific traits creates designer morphs (<em>Super Red Dragonfin</em>, <em>L236rb German Super-White</em>, <em>L600 Titan Cactus</em>). Any 4+ visual gene fish triggers a <strong>WORLD'S FIRST</strong> 2x price multiplier!</p>
+                    <p><strong style="color:var(--cyan);">2. CAVE SPAWNING & ODONTODES:</strong> Adult <code>1.0 Cave-Master Males</code> trap <code>0.1 Gravid Females</code> in slate caves and fan the eggs. Fry need 3 feedings to reach Juvenile (1.5") and 6 feedings to reach Adult breeding size.</p>
+                    <p><strong style="color:var(--cyan);">3. LIVE FOODS & SHRIMP/BUCE TANKS:</strong> Blackworm troughs and Gel/Brine hatcheries eliminate your $20/fish maintenance cost. Propagate <em>Blue Dream Shrimp</em>, <em>Bucephalandra</em>, <em>Subwassertang</em>, and <em>Nerite Snails</em> to sell at club swaps.</p>
+                </div>
+            </div>
+
+            <div>
+                <div class="panel">
+                    <div class="panel-title"><span>⚡ SANDBOX & GOD MODE</span></div>
+                    <div style="font-size:0.76rem; color:var(--text-dim); margin-bottom:8px;">
+                        Bypass the fishroom grind: injects +$50,000 Cash, +100 Breeder Tank Slots, +5,000 Club Reputation, boosts your Shrimp/Buce tanks, and drops a 1.0 & 0.1 breeding pair of World's First 4-gene Imperial Dragonfin Plecos into your rack.
+                    </div>
+                    <button class="btn-purple" style="width:100%; padding:12px; font-size:0.9rem;" onclick="godMode()">⚡ INJECT GOD MODE OVERRIDE</button>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><span>💾 CROSS-DEVICE SAVE (PC ↔ iOS)</span></div>
+                    <div style="font-size:0.74rem; color:var(--text-dim); margin-bottom:6px;">
+                        Uses a dedicated Pleco save slot so it won't overwrite your Reptile game. Copy the string below to transfer between PC and iOS.
+                    </div>
+                    <input type="text" id="save-string-box" placeholder="Paste Pleco save code here or click Export..." style="margin-bottom:6px;">
+                    <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px;">
+                        <button class="btn-cyan" onclick="exportSaveString()">📤 Export Copy</button>
+                        <button class="btn-green" onclick="importSaveString()">📥 Import Load</button>
+                        <button class="btn-red" onclick="hardResetSave()">🗑️ Wipe Save</button>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-title"><span>🏆 WORLD'S FIRST L-NUMBER REGISTRY (<span id="wf-count">0</span>)</span></div>
+                    <div id="wf-list" style="font-size:0.75rem; color:var(--purple);">No 4+ gene World's First plecos spawned yet.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- PINNED NARRATIVE LOG & GLOBAL QUICK CONTROLS -->
+<div id="bottom-dock">
+    <div id="quick-bar">
+        <button class="btn-green" onclick="feedAndAdvanceDay()">🪱 Feed & Water Change</button>
+        <button onclick="passDays(5)">⏩ Pass 5 Days</button>
+        <button class="btn-cyan" onclick="harvestAllMaturePods()">🦐 Quick Bag Shrimp/Buce</button>
+        <button class="btn-purple" onclick="godMode()">⚡ God Mode</button>
+    </div>
+    <div id="log">
+        <div class="log-entry system">>> DEAD RECKONING: PLECO & L-NUMBER ENGINE v1.0 ONLINE</div>
+        <div class="log-entry">20-Locus Loricariidae Genetics, Live Blackworm/Shrimp Racks & 40-Lane Club Auction initialized.</div>
+    </div>
+</div>
+
+<script>
+/* ============================================================================
+   MASTER 20-GENE PLECO & L-NUMBER REGISTRY
+============================================================================ */
+const GENES = {
+    // 10 Incomplete Dominant / Line Loci (Co-Dom)
+    longfin:       { name: "Longfin",           superName: "Dragonfin Veil",     type: "codom", baseVal: 320, color: "#ffca28" },
+    superRed:      { name: "Super Red",         superName: "Blood-Red German",   type: "codom", baseVal: 380, color: "#ff5252" },
+    calico:        { name: "Calico",            superName: "Koi Marble",         type: "codom", baseVal: 300, color: "#ff8a65" },
+    greenDragon:   { name: "Green Dragon",      superName: "Emerald Dragon",     type: "codom", baseVal: 300, color: "#4caf50" },
+    lemonDrop:     { name: "L144 Blue-Eye",     superName: "24K Lemon Drop",     type: "codom", baseVal: 280, color: "#ffee58" },
+    starlight:     { name: "L183 Starlight",    superName: "Wide-Seam Starlight",type: "codom", baseVal: 420, color: "#e0f7fa" },
+    goldNugget:    { name: "L018 Gold Nugget",  superName: "Magnum Gold Seam",   type: "codom", baseVal: 400, color: "#ffd740" },
+    queenArabesque:{ name: "L260 Arabesque",    superName: "Fine-Line Arabesque",type: "codom", baseVal: 360, color: "#d7ccc8" },
+    kingTiger:     { name: "L066 King Tiger",   superName: "Royal Scribble L066",type: "codom", baseVal: 380, color: "#fff8e1" },
+    cactusFlame:   { name: "L024 Flame Cactus", superName: "Crimson Armor L024", type: "codom", baseVal: 450, color: "#ff3d00" },
+
+    // 6 Recessive Loci
+    albino:        { name: "Albino",            type: "recessive", baseVal: 400, color: "#fff59d" },
+    snowWhite:     { name: "Snow White",        type: "recessive", baseVal: 650, color: "#ffffff" },
+    zebra:         { name: "L046 Imperial Zebra",type: "recessive", baseVal: 850, color: "#f5f5f5" },
+    blueEye:       { name: "L236 Super White",  type: "recessive", baseVal: 900, color: "#e8eaf6" },
+    bluePhantom:   { name: "L128 Blue Phantom", type: "recessive", baseVal: 550, color: "#29b6f6" },
+    sunshine:      { name: "L014 Goldie Sunshine",type:"recessive", baseVal: 600, color: "#ffc107" },
+
+    // 4 Dominant Loci
+    highFin:       { name: "High-Fin Sail",     type: "dominant", baseVal: 350, color: "#26c6da" },
+    wavyLine:      { name: "Wavy Vermiculated", type: "dominant", baseVal: 300, color: "#b0bec5" },
+    leopardFrog:   { name: "L134 Leopard Frog", type: "dominant", baseVal: 420, color: "#ffca28" },
+    medusa:        { name: "L034 Medusa Spine", type: "dominant", baseVal: 380, color: "#8d6e63" }
+};
+
+const SYNERGIES = {
+    "longfin,superRed": "Super Red Dragonfin",
+    "albino,longfin": "24K Gold Veil-Tail",
+    "calico,superRed": "Fire-Marble Calico",
+    "blueEye,zebra": "L236rb German Super-White Zebra",
+    "cactusFlame,sunshine": "L600 Titan Flame Cactus",
+    "greenDragon,longfin": "Emerald Dragonfin",
+    "lemonDrop,snowWhite": "Platinum Pearl Blue-Eye",
+    "kingTiger,queenArabesque": "Royal Hypancistrus Maze",
+    "goldNugget,starlight": "Galaxy Seam Gold Nugget",
+    "albino,snowWhite": "Pure Crystal Ghost"
+};
+
+/* ============================================================================
+   DEFAULT GAME STATE
+============================================================================ */
+function getInitialState() {
+    return {
+        day: 1,
+        cash: 1000,
+        maxSpace: 10,
+        reputation: 0,
+        rackFilter: 'all',
+        hypeBonus: false,
+        worldsFirsts: [],
+        reptiles: [
+            {
+                id: 201,
+                sex: "M",
+                stage: "Adult",
+                meals: 6,
+                locked: true,
+                expo: false,
+                name: "Longfin Het L046 Imperial Zebra Pleco",
+                genes: { longfin: 1, zebra: 1 },
+                posHets: {},
+                value: 680,
+                worldsFirst: false
+            },
+            {
+                id: 202,
+                sex: "F",
+                stage: "Adult",
+                meals: 6,
+                locked: true,
+                expo: false,
+                name: "Super Red Het L046 Imperial Zebra Pleco",
+                genes: { superRed: 1, zebra: 1 },
+                posHets: {},
+                value: 740,
+                worldsFirst: false
+            }
+        ],
+        privateQueue: [],
+        bargainMarket: [],
+        feeders: {
+            wormTier: 0,
+            gelTier: 0
+        },
+        hardware: {
+            roSystem: false,
+            powerheads: false,
+            table8ft: false
+        },
+        isopods: {
+            blueDream:   { name: "Blue Dream Neocaridina Shrimp", pop: 35, cupVal: 30, growthRate: 1.28, style: "radial-gradient(circle, #0288d1 35%, #01579b 90%)" },
+            buceGhost:   { name: "Bucephalandra 'Brownie Ghost'", pop: 20, cupVal: 55, growthRate: 1.20, style: "linear-gradient(135deg, #4a148c, #1b5e20, #004d40)" },
+            subwassertang:{ name: "Subwassertang & Flame Moss",   pop: 60, cupVal: 20, growthRate: 1.35, style: "radial-gradient(circle, #43a047 25%, #1b5e20 80%)" },
+            neriteCrew:  { name: "Horned Nerite & MTS Clean-Up", pop: 45, cupVal: 22, growthRate: 1.30, style: "repeating-linear-gradient(45deg, #ffb300, #ffb300 4px, #212121 4px, #212121 8px)" }
+        },
+        harvestedCups: 0,
+        harvestedValue: 0
+    };
+}
+
+let state = getInitialState();
+let activeAuction = null;
+
+/* ============================================================================
+   UTILITIES, LOGGING & PERSISTENCE
+============================================================================ */
+function printLog(msg, type = "") {
+    const logEl = document.getElementById("log");
+    const div = document.createElement("div");
+    div.className = `log-entry ${type}`;
+    div.innerText = `[D${state.day}] > ${msg}`;
+    logEl.appendChild(div);
+    logEl.scrollTop = logEl.scrollHeight;
+}
+
+function saveGame() {
+    try {
+        localStorage.setItem("dead_reckoning_pleco_save_v1", JSON.stringify(state));
+    } catch (e) {}
+}
+
+function loadGame() {
+    try {
+        const raw = localStorage.getItem("dead_reckoning_pleco_save_v1");
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            state = Object.assign(getInitialState(), parsed);
+        }
+    } catch (e) {
+        state = getInitialState();
+    }
+    if (!state.bargainMarket || state.bargainMarket.length === 0) {
+        generateBargainListings();
+    }
+}
+
+function exportSaveString() {
+    saveGame();
+    const str = btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    const box = document.getElementById("save-string-box");
+    box.value = str;
+    box.select();
+    navigator.clipboard?.writeText(str);
+    printLog("Pleco Fishroom save exported and copied to clipboard!", "info");
+}
+
+function importSaveString() {
+    const box = document.getElementById("save-string-box");
+    const raw = box.value.trim();
+    if (!raw) return printLog("Paste a valid save string first.", "warning");
+    try {
+        const json = decodeURIComponent(escape(atob(raw)));
+        state = Object.assign(getInitialState(), JSON.parse(json));
+        saveGame();
+        renderAll();
+        printLog("Pleco Fishroom save state successfully imported!", "success");
+    } catch (e) {
+        printLog("Invalid save string format.", "warning");
+    }
+}
+
+function hardResetSave() {
+    if (!confirm("Drain all tanks and restart your Pleco Empire on Day 1?")) return;
+    localStorage.removeItem("dead_reckoning_pleco_save_v1");
+    state = getInitialState();
+    generateBargainListings();
+    renderAll();
+    printLog("Fishroom reset to Day 1.", "system");
+}
+
+/* ============================================================================
+   PROCEDURAL PLECO SWATCH & GENETIC EVALUATION
+============================================================================ */
+function getMorphSwatchStyle(genes) {
+    const keys = Object.keys(genes).filter(k => genes[k] > 0);
+    if (keys.length === 0) {
+        return "radial-gradient(circle, #5d4037 20%, #1b0f0d 80%)";
+    }
+    if (genes.snowWhite >= 2 || genes.blueEye >= 2) {
+        return "radial-gradient(circle, #ffffff 65%, #80d8ff 100%)";
+    }
+    if (genes.zebra >= 2) {
+        return "repeating-linear-gradient(125deg, #ffffff, #ffffff 5px, #0a0a0a 5px, #0a0a0a 10px)";
+    }
+    const colors = [];
+    keys.forEach(k => {
+        const g = GENES[k];
+        if (!g) return;
+        if (g.type === "recessive" && genes[k] < 2) return;
+        colors.push(g.color);
+    });
+    if (colors.length === 0) {
+        return "repeating-linear-gradient(45deg, #4e342e, #4e342e 6px, #1f1410 6px, #1f1410 12px)";
+    }
+    if (colors.length === 1) {
+        return `repeating-linear-gradient(135deg, ${colors[0]}, ${colors[0]} 7px, #0d131a 7px, #0d131a 13px)`;
+    }
+    return `linear-gradient(135deg, ${colors.join(", ")})`;
+}
+
+function evaluateReptile(genes, posHets = {}) {
+    let visualTraits = [];
+    let hetTraits = [];
+    let totalVal = 50;
+    let expressedVisualKeys = [];
+    let totalVisualLoci = 0;
+
+    const geneKeys = Object.keys(genes).filter(k => genes[k] > 0).sort();
+
+    for (let key of geneKeys) {
+        const count = genes[key];
+        const data = GENES[key];
+        if (!data) continue;
+
+        if (data.type === "codom") {
+            totalVisualLoci++;
+            expressedVisualKeys.push(key);
+            if (count >= 2) {
+                visualTraits.push(data.superName || `Super ${data.name}`);
+                totalVal += data.baseVal * 2.3;
+            } else {
+                visualTraits.push(data.name);
+                totalVal += data.baseVal;
+            }
+        } else if (data.type === "recessive") {
+            if (count >= 2) {
+                totalVisualLoci++;
+                expressedVisualKeys.push(key);
+                visualTraits.push(data.name);
+                totalVal += data.baseVal * 2.6;
+            } else {
+                hetTraits.push(`Het ${data.name}`);
+                totalVal += Math.floor(data.baseVal * 0.45);
+            }
+        } else if (data.type === "dominant") {
+            totalVisualLoci++;
+            expressedVisualKeys.push(key);
+            visualTraits.push(count >= 2 ? `Homo ${data.name}` : data.name);
+            totalVal += data.baseVal * (count >= 2 ? 1.6 : 1);
+        }
+    }
+
+    Object.keys(posHets).forEach(ph => {
+        if (GENES[ph] && !genes[ph]) {
+            hetTraits.push(`66% Pos Het ${GENES[ph].name}`);
+            totalVal += 75;
+        }
+    });
+
+    if (totalVisualLoci >= 3) totalVal = Math.floor(totalVal * 1.4);
+    if (totalVisualLoci >= 4) totalVal = Math.floor(totalVal * 1.85);
+
+    const sig = expressedVisualKeys.sort().join(",");
+    let baseTitle = "";
+    if (SYNERGIES[sig]) {
+        baseTitle = SYNERGIES[sig];
+        totalVal = Math.floor(totalVal * 1.3);
+    } else if (visualTraits.length > 0) {
+        baseTitle = visualTraits.join(" ");
+    } else {
+        baseTitle = "Common Bristlenose";
+    }
+
+    const fullTitle = [baseTitle, ...hetTraits, "Pleco"].join(" ");
+    return {
+        name: fullTitle,
+        value: Math.round(totalVal),
+        visualLociCount: totalVisualLoci,
+        signature: sig
+    };
+}
+
+/* ============================================================================
+   CAVE SPAWNING & 20-GENE MENDELIAN PUNNETT ENGINE
+============================================================================ */
+function updatePunnettPreview() {
+    const sireId = Number(document.getElementById("select-sire")?.value);
+    const damId = Number(document.getElementById("select-dam")?.value);
+    const box = document.getElementById("punnett-preview");
+    if (!box) return;
+
+    const sire = state.reptiles.find(r => r.id === sireId);
+    const dam = state.reptiles.find(r => r.id === damId);
+
+    if (!sire || !dam) {
+        box.innerHTML = "Select an Adult 1.0 Cave-Master Male and Adult 0.1 Gravid Female to preview Mendelian probabilities.";
+        return;
+    }
+
+    const allKeys = new Set([...Object.keys(sire.genes), ...Object.keys(dam.genes)]);
+    if (allKeys.size === 0) {
+        box.innerHTML = `<span style="color:var(--text-main);">Pairing: <strong>${sire.name}</strong> × <strong>${dam.name}</strong></span><br>Outcome: 100% Common Bristlenose Fry (+3% Spontaneous L-Number Mutation chance).`;
+        return;
+    }
+
+    let breakdown = [];
+    allKeys.forEach(k => {
+        const g = GENES[k];
+        if (!g) return;
+        const a1 = sire.genes[k] || 0;
+        const a2 = dam.genes[k] || 0;
+        const p1 = a1 / 2;
+        const p2 = a2 / 2;
+        const prob2 = Math.round(p1 * p2 * 100);
+        const prob1 = Math.round((p1 * (1 - p2) + (1 - p1) * p2) * 100);
+        if (g.type === "recessive") {
+            breakdown.push(`<strong>${g.name} (Rec):</strong> ${prob2}% Visual | ${prob1}% Het`);
+        } else if (g.type === "codom") {
+            breakdown.push(`<strong>${g.name} (Co-Dom):</strong> ${prob2}% ${g.superName || 'Super'} | ${prob1}% Visual`);
+        } else {
+            breakdown.push(`<strong>${g.name} (Dom):</strong> ${prob1 + prob2}% Visual`);
+        }
+    });
+
+    box.innerHTML = `<div style="color:var(--cyan); margin-bottom:4px;">Cave Spawn Forecast (${allKeys.size} Active Loci):</div>` + breakdown.join(" &nbsp;•&nbsp; ");
+}
+
+function breedSelectedPair() {
+    const sireId = Number(document.getElementById("select-sire")?.value);
+    const damId = Number(document.getElementById("select-dam")?.value);
+    const sire = state.reptiles.find(r => r.id === sireId);
+    const dam = state.reptiles.find(r => r.id === damId);
+
+    if (!sire || !dam) return printLog("Select both a valid Adult 1.0 Male and Adult 0.1 Female first!", "warning");
+    if (state.reptiles.length >= state.maxSpace) return printLog("All breeder tanks are full! Sell surplus or add a +10 Breeder Rack.", "warning");
+
+    // Resolve Possible Hets when spawned
+    [sire, dam].forEach(parent => {
+        if (parent.posHets && Object.keys(parent.posHets).length > 0) {
+            Object.keys(parent.posHets).forEach(k => {
+                if (Math.random() < 0.66) {
+                    parent.genes[k] = 1;
+                    printLog(`PROVEN IN CAVE! ${parent.name} proved out 100% Het ${GENES[k].name}!`, "info");
+                } else {
+                    printLog(`${parent.name} did not prove out for Pos Het ${GENES[k].name}.`, "warning");
+                }
+            });
+            parent.posHets = {};
+            const reEval = evaluateReptile(parent.genes, {});
+            parent.name = reEval.name;
+            parent.value = reEval.value;
+        }
+    });
+
+    const clutchSize = Math.min(state.maxSpace - state.reptiles.length, state.hardware.powerheads ? 3 : 2);
+    printLog(`🏺 1.0 ${sire.name} trapped 0.1 ${dam.name} in the slate cave! Fanning ${clutchSize} keeper fry...`, "system");
+
+    for (let e = 0; e < clutchSize; e++) {
+        let childGenes = {};
+        let allKeys = new Set([...Object.keys(sire.genes), ...Object.keys(dam.genes)]);
+
+        allKeys.forEach(k => {
+            const a1 = sire.genes[k] || 0;
+            const a2 = dam.genes[k] || 0;
+            const inherit1 = Math.random() < (a1 / 2) ? 1 : 0;
+            const inherit2 = Math.random() < (a2 / 2) ? 1 : 0;
+            if (inherit1 + inherit2 > 0) {
+                childGenes[k] = inherit1 + inherit2;
+            }
+        });
+
+        // Spontaneous Sport Mutation check
+        if (Math.random() < 0.03) {
+            const allPool = Object.keys(GENES);
+            const bonusGene = allPool[Math.floor(Math.random() * allPool.length)];
+            childGenes[bonusGene] = (childGenes[bonusGene] || 0) + 1;
+            printLog(`⚡ SPORT MUTATION! Fry #${e + 1} expressed spontaneous ${GENES[bonusGene].name} genetics!`, "god");
+        }
+
+        const evaluated = evaluateReptile(childGenes);
+        let isWF = false;
+        let finalName = evaluated.name;
+        let finalVal = evaluated.value;
+
+        if (evaluated.visualLociCount >= 4 && !state.worldsFirsts.includes(evaluated.name)) {
+            state.worldsFirsts.push(evaluated.name);
+            isWF = true;
+            finalName = `WORLD'S FIRST: ${evaluated.name}`;
+            finalVal = Math.round(finalVal * 2.0);
+            state.reputation += 250;
+            printLog(`🏆 WORLD'S FIRST PLECO SPAWNED! ${finalName} registered (+250 Club Rep)!`, "god");
+        }
+
+        const sex = Math.random() < 0.5 ? "M" : "F";
+        state.reptiles.push({
+            id: Date.now() + Math.floor(Math.random() * 10000) + e,
+            sex: sex,
+            stage: "Fry (Wiggler)",
+            meals: 0,
+            locked: isWF,
+            expo: false,
+            name: finalName,
+            genes: childGenes,
+            posHets: {},
+            value: finalVal,
+            worldsFirst: isWF
+        });
+        state.reputation += 8;
+        printLog(`Free-Swimming Fry [${sex === 'M' ? '1.0' : '0.1'}]: ${finalName} (Est: $${finalVal})`, "success");
+    }
+
+    passDays(5);
+}
+
+/* ============================================================================
+   TANK RACK CONTROLS & AQUABID QUEUE
+============================================================================ */
+function setRackFilter(flt) {
+    state.rackFilter = flt;
+    ["all", "M", "F", "expo"].forEach(k => {
+        const btn = document.getElementById(`flt-${k.toLowerCase()}`);
+        if (btn) btn.className = (flt === k) ? "btn-cyan" : "";
+    });
+    renderRack();
+}
+
+function toggleLock(id) {
+    const r = state.reptiles.find(x => x.id === id);
+    if (!r) return;
+    r.locked = !r.locked;
+    if (r.locked) r.expo = false;
+    saveGame();
+    renderAll();
+}
+
+function toggleExpoStar(id) {
+    const r = state.reptiles.find(x => x.id === id);
+    if (!r) return;
+    if (!r.expo) {
+        const currentExpo = state.reptiles.filter(x => x.expo).length;
+        if (currentExpo >= 5) return printLog("Your 8-Foot Swap Table holds a maximum of 5 specimen display boxes!", "warning");
+        r.locked = false;
+        r.expo = true;
+        printLog(`Bagged ${r.name} for 8-Foot Swap Table slot (${currentExpo + 1}/5).`, "info");
+    } else {
+        r.expo = false;
+    }
+    saveGame();
+    renderAll();
+}
+
+function sendToPrivateQueue(id) {
+    const idx = state.reptiles.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const r = state.reptiles[idx];
+    if (r.locked) return printLog("Unlock Holdback status (🔒) before listing on Aquabid.", "warning");
+    if (state.privateQueue.length >= 5) return printLog("Aquabid Shipping Queue is full (5/5)! Advance days to clear orders.", "warning");
+
+    r.expo = false;
+    state.reptiles.splice(idx, 1);
+    state.privateQueue.push(r);
+    printLog(`Listed ${r.name} on Aquabid Direct Queue ($${r.value} + Club Rep bonus).`, "info");
+    saveGame();
+    renderAll();
+}
+
+function cancelQueueListing(id) {
+    if (state.reptiles.length >= state.maxSpace) return printLog("All tanks are full!", "warning");
+    const idx = state.privateQueue.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const r = state.privateQueue.splice(idx, 1)[0];
+    state.reptiles.push(r);
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   BARGAIN AQUABID & TRANSSHIP IMPORTS
+============================================================================ */
+function generateBargainListings() {
+    const pool = Object.keys(GENES);
+    const listings = [];
+    const tags = [
+        { label: "Local Fishroom Tank Teardown", disc: 0.65, posHet: false },
+        { label: "Unproven 66% Pos Het Clutchmate", disc: 0.52, posHet: true },
+        { label: "Mislabeled LFS Trade-In", disc: 0.58, posHet: false },
+        { label: "Surplus Cave-Breeder Clearout", disc: 0.72, posHet: false }
+    ];
+
+    for (let i = 0; i < 4; i++) {
+        const tag = tags[i];
+        const g1 = pool[Math.floor(Math.random() * pool.length)];
+        let genes = {};
+        let posHets = {};
+
+        if (tag.posHet) {
+            const recPool = ["albino", "snowWhite", "zebra", "blueEye", "bluePhantom", "sunshine"];
+            const recPick = recPool[Math.floor(Math.random() * recPool.length)];
+            genes[g1] = 1;
+            posHets[recPick] = 1;
+        } else {
+            genes[g1] = GENES[g1].type === "recessive" ? (Math.random() < 0.35 ? 2 : 1) : 1;
+            if (Math.random() < 0.45) {
+                const g2 = pool[Math.floor(Math.random() * pool.length)];
+                if (g2 !== g1) genes[g2] = 1;
+            }
+        }
+
+        const evalData = evaluateReptile(genes, posHets);
+        const askPrice = Math.max(95, Math.round(evalData.value * tag.disc));
+        listings.push({
+            id: Date.now() + i + Math.floor(Math.random() * 9999),
+            tag: tag.label,
+            sex: Math.random() < 0.5 ? "M" : "F",
+            stage: Math.random() < 0.6 ? "Adult" : "Juvenile (1.5\")",
+            meals: 6,
+            name: evalData.name,
+            genes: genes,
+            posHets: posHets,
+            value: evalData.value,
+            askPrice: askPrice
+        });
+    }
+    state.bargainMarket = listings;
+}
+
+function refreshBargainMarket(paid = false) {
+    if (paid) {
+        if (state.cash < 50) return printLog("Need $50 to scout fresh Aquabid & club teardown listings.", "warning");
+        state.cash -= 50;
+    }
+    generateBargainListings();
+    printLog("Scouted 4 new distressed pleco listings.", "info");
+    saveGame();
+    renderAll();
+}
+
+function buyBargainListing(id) {
+    const idx = state.bargainMarket.findIndex(x => x.id === id);
+    if (idx === -1) return;
+    const item = state.bargainMarket[idx];
+    if (state.cash < item.askPrice) return printLog(`Insufficient cash! Need $${item.askPrice}.`, "warning");
+    if (state.reptiles.length >= state.maxSpace) return printLog("Breeder tanks are full!", "warning");
+
+    state.cash -= item.askPrice;
+    state.bargainMarket.splice(idx, 1);
+    state.reptiles.push({
+        id: item.id,
+        sex: item.sex,
+        stage: item.stage,
+        meals: item.stage === "Adult" ? 6 : 3,
+        locked: false,
+        expo: false,
+        name: item.name,
+        genes: item.genes,
+        posHets: item.posHets || {},
+        value: item.value,
+        worldsFirst: false
+    });
+    state.reputation += 5;
+    printLog(`Acclimated Bargain Pick: ${item.name} for $${item.askPrice} (Est Value: $${item.value})!`, "success");
+    saveGame();
+    renderAll();
+}
+
+function buyBlindStock() {
+    if (state.cash < 250) return printLog("Need $250 for a transshipped import box.", "warning");
+    if (state.reptiles.length >= state.maxSpace) return printLog("No tank space available!", "warning");
+
+    state.cash -= 250;
+    const keys = Object.keys(GENES);
+    const k1 = keys[Math.floor(Math.random() * keys.length)];
+    let genes = {};
+    genes[k1] = GENES[k1].type === "recessive" ? 1 : (Math.random() > 0.8 ? 2 : 1);
+    if (Math.random() > 0.65) {
+        const k2 = keys[Math.floor(Math.random() * keys.length)];
+        if (k2 !== k1) genes[k2] = 1;
+    }
+
+    const evaluated = evaluateReptile(genes);
+    const sex = Math.random() < 0.5 ? "M" : "F";
+    state.reptiles.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
+        sex: sex,
+        stage: "Adult",
+        meals: 6,
+        locked: false,
+        expo: false,
+        name: evaluated.name,
+        genes: genes,
+        posHets: {},
+        value: evaluated.value,
+        worldsFirst: false
+    });
+    state.reputation += 5;
+    printLog(`Transship Box Unpacked: [${sex === 'M' ? '1.0' : '0.1'}] ${evaluated.name} ($${evaluated.value} est).`, "success");
+    passDays(1);
+}
+
+/* ============================================================================
+   LIVE FOODS, SHRIMP/BUCE CULTURES & FISHROOM HARDWARE
+============================================================================ */
+function getFeederCoverageCount() {
+    return (state.feeders.wormTier * 4) + (state.feeders.gelTier * 3);
+}
+
+function upgradeFeeder(type) {
+    if (type === "worm") {
+        const cost = (state.feeders.wormTier + 1) * 400;
+        if (state.cash < cost) return printLog(`Need $${cost} to expand Blackworm Troughs.`, "warning");
+        state.cash -= cost;
+        state.feeders.wormTier++;
+        printLog(`California Blackworm Troughs upgraded to Tier ${state.feeders.wormTier}!`, "success");
+    } else {
+        const cost = (state.feeders.gelTier + 1) * 350;
+        if (state.cash < cost) return printLog(`Need $${cost} to expand Aufwuchs Gel & Brine Hatchery.`, "warning");
+        state.cash -= cost;
+        state.feeders.gelTier++;
+        printLog(`Aufwuchs Gel & Brine Hatchery upgraded to Tier ${state.feeders.gelTier}! Fry now grow 2x faster.`, "success");
+    }
+    saveGame();
+    renderAll();
+}
+
+function buyHardware(key, cost, label) {
+    if (state.hardware[key]) return;
+    if (state.cash < cost) return printLog(`Need $${cost} for ${label}.`, "warning");
+    state.cash -= cost;
+    state.hardware[key] = true;
+    state.reputation += 25;
+    printLog(`Installed ${label}! Shrimp/plant propagation & cave spawn rates increased.`, "success");
+    saveGame();
+    renderAll();
+}
+
+function harvestPodBin(key) {
+    const bin = state.isopods[key];
+    if (!bin || bin.pop < 60) return printLog(`${bin.name} needs at least 60 stock before bagging a 25-count breeder portion.`, "warning");
+    bin.pop -= 25;
+    state.harvestedCups += 1;
+    state.harvestedValue += bin.cupVal;
+    printLog(`Bagged 1x ${bin.name} lot (+$${bin.cupVal} Swap/Local value).`, "success");
+    saveGame();
+    renderAll();
+}
+
+function harvestAllMaturePods() {
+    let totalHarvested = 0;
+    Object.keys(state.isopods).forEach(k => {
+        const bin = state.isopods[k];
+        while (bin.pop >= 100) {
+            bin.pop -= 25;
+            state.harvestedCups += 1;
+            state.harvestedValue += bin.cupVal;
+            totalHarvested++;
+        }
+    });
+    if (totalHarvested === 0) {
+        printLog("No Shrimp/Buce/Moss tanks are above the 100-stock auto-bagging threshold yet.", "warning");
+    } else {
+        printLog(`Auto-bagged ${totalHarvested} Shrimp & Plant breather bags! Ready for the Swap Table or local sale.`, "success");
+    }
+    saveGame();
+    renderAll();
+}
+
+function sellHarvestedCupsDirect() {
+    if (state.harvestedCups <= 0) return printLog("No bagged Shrimp/Plant lots in stock! Harvest from your tanks first.", "warning");
+    const payout = state.harvestedValue;
+    const count = state.harvestedCups;
+    state.cash += payout;
+    state.reputation += count * 2;
+    state.harvestedCups = 0;
+    state.harvestedValue = 0;
+    printLog(`Sold ${count} Shrimp/Buce/Moss bags to local aquascapers for $${payout}!`, "success");
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   TIME, FEEDING, WATER CHANGES & FRY GROWTH
+============================================================================ */
+function feedAndAdvanceDay() {
+    const totalFish = state.reptiles.length;
+    const covered = getFeederCoverageCount();
+    const uncovered = Math.max(0, totalFish - covered);
+    const feedBill = uncovered * 20;
+
+    if (state.cash < feedBill) {
+        printLog(`⚠️ Insufficient cash for food & water conditioner ($${feedBill} needed)! Sell stock or use God Mode.`, "warning");
+        return;
+    }
+
+    state.cash -= feedBill;
+
+    const growthBoost = state.feeders.gelTier > 0 ? 2 : 1;
+    let maturedCount = 0;
+    state.reptiles.forEach(r => {
+        if (r.stage !== "Adult") {
+            r.meals = (r.meals || 0) + growthBoost;
+            if (r.meals >= 6 && r.stage !== "Adult") {
+                r.stage = "Adult";
+                maturedCount++;
+            } else if (r.meals >= 3 && r.stage === "Fry (Wiggler)") {
+                r.stage = "Juvenile (1.5\")";
+            }
+        }
+    });
+
+    printLog(`Fed ${totalFish} plecos & completed water changes (Live cultures covered ${Math.min(totalFish, covered)}, Cost: $${feedBill}).`);
+    if (maturedCount > 0) {
+        printLog(`🐟 ${maturedCount} pleco(s) developed full odontodes/gravid condition and reached Adult breeding size!`, "success");
+    }
+
+    passDays(1);
+}
+
+function passDays(days = 1) {
+    for (let d = 0; d < days; d++) {
+        state.day += 1;
+
+        let hwBonus = 1.0 + (state.hardware.roSystem ? 0.05 : 0) + (state.hardware.powerheads ? 0.06 : 0) + (state.hardware.table8ft ? 0.08 : 0);
+        Object.keys(state.isopods).forEach(k => {
+            const bin = state.isopods[k];
+            const dailyFactor = 1 + ((bin.growthRate * hwBonus - 1) * 0.25);
+            bin.pop = Math.min(2500, Math.round(bin.pop * dailyFactor) + 2);
+        });
+
+        if (state.privateQueue.length > 0 && Math.random() < 0.65) {
+            const sold = state.privateQueue.shift();
+            const repBonus = Math.min(500, Math.floor(state.reputation * 0.8));
+            const price = sold.value + repBonus;
+            state.cash += price;
+            state.reputation += 4;
+            printLog(`📬 Aquabid Direct Sale: Shipped ${sold.name} in breather bag for $${price}!`, "success");
+        }
+
+        if (state.day % 5 === 0) {
+            generateBargainListings();
+        }
+    }
+    saveGame();
+    renderAll();
+}
+
+function upgradeRack() {
+    if (state.cash < 1000) return printLog("Insufficient funds for 40-Gallon Breeder Sump Rack. Need $1,000.", "warning");
+    state.cash -= 1000;
+    state.maxSpace += 10;
+    printLog("Plumbed new 10-Tank Breeder Rack with terracotta caves! Capacity +10.", "success");
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   8-FOOT SWAP TABLE & 40-LANE CLUB AUCTION
+============================================================================ */
+function runSocialHype() {
+    if (state.hypeBonus) return printLog("Macro fin photography thread is already viral on PlanetCatfish!", "info");
+    if (state.cash < 150) return printLog("Need $150 to sponsor an L-Number showcase thread.", "warning");
+    state.cash -= 150;
+    state.hypeBonus = true;
+    state.reputation += 15;
+    printLog("📸 Posted crisp macro fin-ray shots online! L-Number Whales (Lanes 1-5) are locked in for your next Swap.", "info");
+    saveGame();
+    renderAll();
+}
+
+function startExpoAuction() {
+    const picks = state.reptiles.filter(r => r.expo);
+    if (picks.length === 0 && state.harvestedCups === 0) {
+        return printLog("Star (⭐) up to 5 plecos in your Tanks or bring bagged Shrimp/Buce lots before opening the 40-Lane Club Swap!", "warning");
+    }
+
+    if (state.harvestedCups > 0) {
+        const tableBonus = state.hardware.table8ft ? 1.35 : 1.15;
+        const podRevenue = Math.round(state.harvestedValue * tableBonus);
+        state.cash += podRevenue;
+        state.reputation += state.harvestedCups * 3;
+        printLog(`🎪 8-Foot Swap Table Walk-Ups: Sold all ${state.harvestedCups} Shrimp & Bucephalandra bags for $${podRevenue}!`, "success");
+        state.harvestedCups = 0;
+        state.harvestedValue = 0;
+    }
+
+    if (picks.length === 0) {
+        saveGame();
+        renderAll();
+        return;
+    }
+
+    const lanes = [];
+    for (let i = 1; i <= 40; i++) {
+        let tier = 4, label = "BagHunt";
+        if (i <= 5) { tier = 1; label = "L-Whale"; }
+        else if (i <= 15) { tier = 2; label = "Breeder"; }
+        else if (i <= 30) { tier = 3; label = "Scaper"; }
+        lanes.push({ lane: i, tier, label, activePickIdx: -1, bid: 0, war: false });
+    }
+
+    const lots = picks.map(p => ({
+        snake: p,
+        currentBid: Math.round(p.value * 0.85),
+        highLane: Math.floor(Math.random() * 40) + 1
+    }));
+
+    activeAuction = {
+        round: 1,
+        maxRounds: 3,
+        lots: lots,
+        lanes: lanes
+    };
+
+    simulateLaneWave(1.0);
+    document.getElementById("expo-live-controls").style.display = "grid";
+    document.getElementById("btn-start-expo").disabled = true;
+    printLog(`🏛️ 40-LANE CLUB AUCTION OPENED! ${lots.length} showcase pleco bag(s) on the block.`, "system");
+    renderExpo();
+}
+
+function simulateLaneWave(intensity = 1.0) {
+    if (!activeAuction) return;
+    const repFactor = 1 + Math.min(0.75, state.reputation / 2000) + (state.hypeBonus ? 0.25 : 0);
+
+    activeAuction.lanes.forEach(l => { l.activePickIdx = -1; l.war = false; });
+
+    activeAuction.lots.forEach((lot, idx) => {
+        const bump = Math.round((lot.snake.value * (0.14 + Math.random() * 0.18)) * intensity * repFactor);
+        lot.currentBid += bump;
+
+        const numBidders = Math.min(8, 3 + Math.floor(lot.snake.value / 600));
+        for (let b = 0; b < numBidders; b++) {
+            let laneNum;
+            if (lot.snake.value >= 1000 && Math.random() < 0.65) {
+                laneNum = Math.floor(Math.random() * 15) + 1;
+            } else {
+                laneNum = Math.floor(Math.random() * 40) + 1;
+            }
+            const laneObj = activeAuction.lanes[laneNum - 1];
+            laneObj.activePickIdx = idx + 1;
+            laneObj.bid = lot.currentBid;
+            if (b === 0) {
+                lot.highLane = laneNum;
+                laneObj.war = true;
+            }
+        }
+    });
+}
+
+function advanceAuctionRound(action) {
+    if (!activeAuction) return;
+    if (activeAuction.round >= activeAuction.maxRounds) {
+        return finalizeExpoSales();
+    }
+    activeAuction.round++;
+    let mult = 1.0;
+    if (action === "hype") {
+        mult = 1.35;
+        printLog(`🔦 Shined high-CRI spotlight on the specimen boxes! Dorsal fins flare—bidding war erupts!`, "info");
+    } else {
+        printLog(`⏱️ Held reserve on the bags! Entering Bidding Wave ${activeAuction.round}/${activeAuction.maxRounds}...`);
+    }
+    simulateLaneWave(mult);
+    if (activeAuction.round >= activeAuction.maxRounds) {
+        finalizeExpoSales();
+    } else {
+        renderExpo();
+    }
+}
+
+function finalizeExpoSales() {
+    if (!activeAuction) return;
+    let totalEarned = 0;
+
+    activeAuction.lots.forEach(lot => {
+        totalEarned += lot.currentBid;
+        const idx = state.reptiles.findIndex(r => r.id === lot.snake.id);
+        if (idx !== -1) state.reptiles.splice(idx, 1);
+        printLog(`🔨 SOLD [Lane #${lot.highLane}]: ${lot.snake.name} hammered at $${lot.currentBid.toLocaleString()}!`, "success");
+    });
+
+    state.cash += totalEarned;
+    state.reputation += activeAuction.lots.length * 15;
+    state.hypeBonus = false;
+    activeAuction = null;
+
+    document.getElementById("expo-live-controls").style.display = "none";
+    document.getElementById("btn-start-expo").disabled = false;
+    printLog(`🏛️ Club Swap concluded! Total 40-Lane Hammer Payout: $${totalEarned.toLocaleString()}.`, "system");
+    passDays(2);
+}
+
+/* ============================================================================
+   GOD MODE OVERRIDE
+============================================================================ */
+function godMode() {
+    state.cash += 50000;
+    state.maxSpace += 100;
+    state.reputation += 5000;
+
+    Object.keys(state.isopods).forEach(k => {
+        state.isopods[k].pop += 200;
+    });
+    state.harvestedCups += 10;
+    state.harvestedValue += 400;
+
+    const godGenes = { longfin: 2, superRed: 1, zebra: 2, blueEye: 2 };
+    const evaluated = evaluateReptile(godGenes);
+    const wfName = `WORLD'S FIRST: ${evaluated.name}`;
+
+    if (!state.worldsFirsts.includes(evaluated.name)) {
+        state.worldsFirsts.push(evaluated.name);
+    }
+
+    ["M", "F"].forEach((sex, idx) => {
+        state.reptiles.push({
+            id: Date.now() + idx + Math.floor(Math.random() * 9999),
+            sex: sex,
+            stage: "Adult",
+            meals: 6,
+            locked: false,
+            expo: false,
+            name: wfName,
+            genes: { ...godGenes },
+            posHets: {},
+            value: evaluated.value * 3,
+            worldsFirst: true
+        });
+    });
+
+    printLog("!!! ⚡ GOD MODE INJECTED ⚡ !!!", "god");
+    printLog("+$50,000 Cash | +100 Breeder Tanks | +5,000 Club Rep | +200 Shrimp/Buce Stock", "god");
+    printLog(`Injected 1.0 & 0.1 Breeding Pair: ${wfName} ($${(evaluated.value * 3).toLocaleString()} ea)`, "god");
+
+    saveGame();
+    renderAll();
+}
+
+/* ============================================================================
+   UI RENDERING FUNCTIONS
+============================================================================ */
+function switchTab(tabName, btnEl) {
+    document.querySelectorAll(".tab-pane").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    document.getElementById(`tab-${tabName}`).classList.add("active");
+    if (btnEl) btnEl.classList.add("active");
+    renderAll();
+}
+
+function renderVitals() {
+    document.getElementById("v-day").innerText = state.day;
+    document.getElementById("v-cash").innerText = `$${state.cash.toLocaleString()}`;
+    document.getElementById("v-rack").innerText = `${state.reptiles.length} / ${state.maxSpace}`;
+    document.getElementById("v-rep").innerText = state.reputation.toLocaleString();
+
+    const totalFish = Math.max(1, state.reptiles.length);
+    const covPct = Math.min(100, Math.round((getFeederCoverageCount() / totalFish) * 100));
+    document.getElementById("v-feed").innerText = `${covPct}%`;
+
+    const expoCount = state.reptiles.filter(r => r.expo).length;
+    document.getElementById("v-expo").innerText = `${expoCount}/5 | Q:${state.privateQueue.length}`;
+}
+
+function renderRack() {
+    document.getElementById("rack-count-label").innerText = `${state.reptiles.length} / ${state.maxSpace}`;
+    document.getElementById("inc-status").innerText = state.hardware.powerheads
+        ? "Breeding Cave: High-Flow River Slate (3 Keeper Fry/Spawn)"
+        : "Breeding Cave: Standard Slate (2 Keeper Fry/Spawn)";
+
+    const sireSel = document.getElementById("select-sire");
+    const damSel = document.getElementById("select-dam");
+    const prevSire = sireSel.value;
+    const prevDam = damSel.value;
+
+    const adultMales = state.reptiles.filter(r => r.sex === "M" && r.stage === "Adult");
+    const adultFemales = state.reptiles.filter(r => r.sex === "F" && r.stage === "Adult");
+
+    sireSel.innerHTML = adultMales.map(m => `<option value="${m.id}">1.0 ${m.name} ($${m.value})</option>`).join("") || `<option value="">No Adult 1.0 Males</option>`;
+    damSel.innerHTML = adultFemales.map(f => `<option value="${f.id}">0.1 ${f.name} ($${f.value})</option>`).join("") || `<option value="">No Adult 0.1 Females</option>`;
+
+    if (prevSire && adultMales.some(m => String(m.id) === prevSire)) sireSel.value = prevSire;
+    if (prevDam && adultFemales.some(f => String(f.id) === prevDam)) damSel.value = prevDam;
+    updatePunnettPreview();
+
+    let list = state.reptiles;
+    if (state.rackFilter === "M") list = list.filter(r => r.sex === "M");
+    else if (state.rackFilter === "F") list = list.filter(r => r.sex === "F");
+    else if (state.rackFilter === "expo") list = list.filter(r => r.expo);
+
+    const grid = document.getElementById("rack-grid");
+    grid.innerHTML = list.map(r => {
+        const swatchStyle = getMorphSwatchStyle(r.genes);
+        const sexBadge = r.sex === "M" ? `<span class="badge male">1.0 M</span>` : `<span class="badge female">0.1 F</span>`;
+        const wfBadge = r.worldsFirst ? `<span class="badge wf">🏆 WF</span>` : "";
+        return `
+        <div class="fish-card ${r.locked ? 'locked' : ''} ${r.expo ? 'expo-picked' : ''} ${r.worldsFirst ? 'worlds-first' : ''}">
+            <div class="card-top">
+                <div class="swatch" style="background: ${swatchStyle};"></div>
+                <div class="fish-info">
+                    <div class="fish-name" title="${r.name}">${r.name}</div>
+                    <div class="fish-meta">
+                        ${sexBadge}
+                        <span class="badge stage">${r.stage}</span>
+                        ${wfBadge}
+                        <span style="color:var(--green); font-weight:bold;">$${r.value.toLocaleString()}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button onclick="toggleLock(${r.id})" class="${r.locked ? 'btn-amber' : ''}">${r.locked ? '🔒 Hold' : '🔓 Open'}</button>
+                <button onclick="toggleExpoStar(${r.id})" class="${r.expo ? 'btn-gold-active' : ''}">${r.expo ? '⭐ Table' : '☆ Swap'}</button>
+                <button onclick="sendToPrivateQueue(${r.id})" ${r.locked ? 'disabled' : ''}>📬 Aquabid</button>
+                <button class="btn-green" onclick="quickSellWholesale(${r.id})" ${r.locked ? 'disabled' : ''}>💵 $${Math.round(r.value * 0.7)}</button>
+            </div>
+        </div>`;
+    }).join("");
+}
+
+function quickSellWholesale(id) {
+    const idx = state.reptiles.findIndex(r => r.id === id);
+    if (idx === -1) return;
+    const r = state.reptiles[idx];
+    if (r.locked) return;
+    const price = Math.round(r.value * 0.7);
+    state.reptiles.splice(idx, 1);
+    state.cash += price;
+    printLog(`LFS Store Credit Cashout: Sold ${r.name} for $${price}.`, "success");
+    saveGame();
+    renderAll();
+}
+
+function renderMarket() {
+    const bGrid = document.getElementById("bargain-grid");
+    bGrid.innerHTML = state.bargainMarket.map(item => {
+        const swatchStyle = getMorphSwatchStyle(item.genes);
+        const sexBadge = item.sex === "M" ? `<span class="badge male">1.0 M</span>` : `<span class="badge female">0.1 F</span>`;
+        return `
+        <div class="fish-card">
+            <div style="font-size:0.68rem; color:var(--cyan); font-weight:bold;">⚡ ${item.tag}</div>
+            <div class="card-top">
+                <div class="swatch" style="background: ${swatchStyle};"></div>
+                <div class="fish-info">
+                    <div class="fish-name">${item.name}</div>
+                    <div class="fish-meta">
+                        ${sexBadge}
+                        <span class="badge stage">${item.stage}</span>
+                        <span>Est Val: $${item.value}</span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-green" style="width:100%; font-weight:bold;" onclick="buyBargainListing(${item.id})">
+                Snipe Listing for $${item.askPrice}
+            </button>
+        </div>`;
+    }).join("") || `<div style="color:var(--text-dim); font-size:0.8rem;">All bargain plecos sniped! Advance days or click Scout Listings.</div>`;
+
+    document.getElementById("queue-count").innerText = state.privateQueue.length;
+    const qGrid = document.getElementById("queue-grid");
+    qGrid.innerHTML = state.privateQueue.map(r => `
+        <div class="fish-card">
+            <div class="card-top">
+                <div class="swatch" style="background: ${getMorphSwatchStyle(r.genes)};"></div>
+                <div class="fish-info">
+                    <div class="fish-name">${r.name}</div>
+                    <div class="fish-meta">Asking: <strong style="color:var(--green);">$${r.value} + Rep</strong></div>
+                </div>
+                <button class="btn-red" onclick="cancelQueueListing(${r.id})">Unlist</button>
+            </div>
+        </div>
+    `).join("") || `<div style="color:var(--text-dim); font-size:0.8rem;">No plecos currently in the Aquabid Shipping Queue.</div>`;
+}
+
+function renderBioactive() {
+    document.getElementById("worm-tier").innerText = state.feeders.wormTier;
+    document.getElementById("worm-cov").innerText = state.feeders.wormTier * 4;
+    document.getElementById("worm-cost").innerText = (state.feeders.wormTier + 1) * 400;
+
+    document.getElementById("gel-tier").innerText = state.feeders.gelTier;
+    document.getElementById("gel-cov").innerText = state.feeders.gelTier * 3;
+    document.getElementById("gel-cost").innerText = (state.feeders.gelTier + 1) * 350;
+
+    const saved = getFeederCoverageCount() * 20;
+    document.getElementById("feeder-savings-label").innerText = `Offsets up to $${saved}/cycle`;
+
+    const hwItems = [
+        { key: "roSystem", cost: 300, name: "RO/DI Remineralizer & Drip System (+5% Shrimp/Buce Growth)" },
+        { key: "powerheads", cost: 450, name: "High-Flow River Powerheads & Caves (+6% Cultures & +1 Fry/Spawn)" },
+        { key: "table8ft", cost: 600, name: "8-Foot Illuminated Club Swap Table (+35% Swap Bag Payout)" }
+    ];
+    document.getElementById("hardware-list").innerHTML = hwItems.map(h => `
+        <div class="fish-card" style="flex-direction:row; justify-content:space-between; align-items:center;">
+            <span style="font-size:0.78rem;">${h.name}</span>
+            ${state.hardware[h.key]
+                ? `<span class="badge" style="color:var(--green); border-color:var(--green);">INSTALLED</span>`
+                : `<button class="btn-cyan" onclick="buyHardware('${h.key}',${h.cost}, '${h.name}')">Buy ($${h.cost})</button>`}
+        </div>
+    `).join("");
+
+    document.getElementById("iso-cups-ready").innerText = state.harvestedCups;
+    document.getElementById("iso-cups-val").innerText = state.harvestedValue;
+
+    const iGrid = document.getElementById("isopod-grid");
+    iGrid.innerHTML = Object.keys(state.isopods).map(k => {
+        const bin = state.isopods[k];
+        return `
+        <div class="fish-card">
+            <div class="card-top">
+                <div class="swatch" style="background: ${bin.style};"></div>
+                <div class="fish-info">
+                    <div class="fish-name">${bin.name}</div>
+                    <div class="fish-meta">
+                        <span>Stock: <strong style="color:var(--cyan);">${bin.pop}</strong></span>
+                        <span>Bag Value: <strong style="color:var(--green);">$${bin.cupVal}</strong></span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-cyan" onclick="harvestPodBin('${k}')" ${bin.pop < 60 ? 'disabled' : ''}>
+                🛍️ Bag 25-Unit Portion (Req 60 stock)
+            </button>
+        </div>`;
+    }).join("");
+}
+
+function renderExpo() {
+    const picks = state.reptiles.filter(r => r.expo);
+    document.getElementById("expo-pick-count").innerText = picks.length;
+    document.getElementById("expo-iso-count").innerText = state.harvestedCups;
+
+    const tCards = document.getElementById("expo-table-cards");
+    if (picks.length === 0) {
+        tCards.innerHTML = `<div style="color:var(--text-dim); font-size:0.8rem;">No showcase plecos starred (⭐) yet! Go to <strong>TANKS & CAVES</strong> and star up to 5 fish for your 8-foot table.</div>`;
+    } else {
+        tCards.innerHTML = picks.map((p, idx) => {
+            const lot = activeAuction?.lots.find(l => l.snake.id === p.id);
+            return `
+            <div class="fish-card expo-picked">
+                <div class="card-top">
+                    <div class="swatch" style="background: ${getMorphSwatchStyle(p.genes)};"></div>
+                    <div class="fish-info">
+                        <div class="fish-name">Box #${idx + 1}: ${p.name}</div>
+                        <div class="fish-meta">
+                            <span>Base Est: $${p.value.toLocaleString()}</span>
+                            ${lot ? `<span style="color:var(--green); font-weight:bold;">🔥 Live Bid: $${lot.currentBid.toLocaleString()} (Lane #${lot.highLane})</span>` : ""}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    const roundLbl = document.getElementById("expo-round-label");
+    if (activeAuction) {
+        roundLbl.innerText = `LIVE BIDDING WAVE ${activeAuction.round} / ${activeAuction.maxRounds}`;
+    } else {
+        roundLbl.innerText = state.hypeBonus ? "Status: PlanetCatfish Hype Active (+25% Bids)" : "Status: Ready for Weekend Club Swap";
+    }
+
+    const lGrid = document.getElementById("lane-grid");
+    const lanesData = activeAuction ? activeAuction.lanes : Array.from({ length: 40 }, (_, i) => ({
+        lane: i + 1,
+        tier: i < 5 ? 1 : (i < 15 ? 2 : (i < 30 ? 3 : 4)),
+        label: i < 5 ? "L-Whale" : (i < 15 ? "Breeder" : (i < 30 ? "Scaper" : "BagHunt")),
+        activePickIdx: -1,
+        bid: 0,
+        war: false
+    }));
+
+    lGrid.innerHTML = lanesData.map(l => {
+        const stateClass = l.war ? "war" : (l.activePickIdx > 0 ? "bidding" : "");
+        return `
+        <div class="lane-cell lane-tier-${l.tier} ${stateClass}">
+            <div>L#${l.lane} ${l.label}</div>
+            <div style="margin-top:2px;">
+                ${l.activePickIdx > 0 ? `Box #${l.activePickIdx}<br>$${l.bid}` : "Idle"}
+            </div>
+        </div>`;
+    }).join("");
+}
+
+function renderManual() {
+    document.getElementById("wf-count").innerText = state.worldsFirsts.length;
+    const wfEl = document.getElementById("wf-list");
+    if (state.worldsFirsts.length > 0) {
+        wfEl.innerHTML = state.worldsFirsts.map(w => `<div>🏆 ${w}</div>`).join("");
+    } else {
+        wfEl.innerText = "No 4+ gene World's First plecos spawned yet.";
+    }
+}
+
+function renderAll() {
+    renderVitals();
+    renderRack();
+    renderMarket();
+    renderBioactive();
+    renderExpo();
+    renderManual();
+}
+
+loadGame();
+renderAll();
+</script>
+</body>
+</html>
